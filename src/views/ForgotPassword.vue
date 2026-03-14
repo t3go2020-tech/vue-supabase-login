@@ -92,10 +92,11 @@ const handleSubmit = async () => {
     
     loading.value = true
     try {
+      const redirectUrl = window.location.origin + '/reset-password'
       const { error } = await supabase.auth.resetPasswordForEmail(
         forgotForm.email,
         {
-redirectTo: import.meta.env.VITE_APP_URL + '/reset-password'
+          redirectTo: redirectUrl
         }
       )
       

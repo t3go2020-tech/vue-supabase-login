@@ -158,11 +158,12 @@ const sendVerifyCode = async () => {
   }
   
   try {
+    const redirectUrl = window.location.origin + '/home'
     const { error } = await supabase.auth.signUp({
       email: registerForm.email,
       password: registerForm.password,
       options: {
-emailRedirectTo: import.meta.env.VITE_APP_URL + '/home'
+        emailRedirectTo: redirectUrl
       }
     })
     
