@@ -49,6 +49,8 @@
       </el-form>
       
       <div class="footer-links">
+        <el-link type="primary" @click="goToForgotPassword">忘记密码？</el-link>
+        <span class="divider">|</span>
         <span>还没有账号？</span>
         <el-link type="primary" @click="goToRegister">立即注册</el-link>
       </div>
@@ -101,15 +103,33 @@ const handleLogin = async () => {
       ElMessage.success('登录成功')
       router.push('/home')
     } catch (error) {
-      ElMessage.error(error.message || '登录失败')
+      handleLoginError(error)
     } finally {
       loading.value = false
     }
   })
 }
 
+const handleLoginError = (error) => {
+  const errorMessages = {
+    'Invalid login credentials': '邮箱或密码错误，请检查后重试',
+    'Invalid email': '邮箱地址格式不正确',
+    'User not found': '该用户不存在，请先注册',
+    'Email not confirmed': '邮箱尚未验证，请查收验证邮件',
+    'Too many requests': '登录尝试过于频繁，请稍后再试',
+    'Network error': '网络错误，请检查网络连接'
+  }
+  
+  const message = errorMessages[error.message] || error.message || '登录失败，请稍后重试'
+  ElMessage.error(message)
+}
+
 const goToRegister = () => {
   router.push('/register')
+}
+
+const goToForgotPassword = () => {
+  router.push('/forgot-password')
 }
 </script>
 
@@ -142,5 +162,9 @@ const goToRegister = () => {
   align-items: center;
   gap: 8px;
   margin-top: 16px;
+}
+
+.divider {
+  color: #dcdfe6;
 }
 </style>

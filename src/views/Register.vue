@@ -47,22 +47,28 @@
         </el-form-item>
         
         <el-form-item prop="verifyCode">
-          <el-input
-            v-model="registerForm.verifyCode"
-            placeholder="请输入邮箱验证码"
-            :prefix-icon="Key"
-            size="large"
-            maxlength="6"
-          >
-            <template #append>
+          <div class="verify-code-wrapper">
+            <el-input
+              v-model="registerForm.verifyCode"
+              placeholder="请输入邮箱验证码"
+              :prefix-icon="Key"
+              size="large"
+              maxlength="6"
+            />
+            <div class="countdown-wrapper">
               <el-button 
-                :disabled="countdown > 0" 
+                v-if="countdown === 0"
+                type="primary"
+                link
                 @click="sendVerifyCode"
               >
-                {{ countdown > 0 ? `${countdown}s` : '获取验证码' }}
+                重新发送
               </el-button>
-            </template>
-          </el-input>
+              <span v-else class="countdown-text">
+                {{ formatCountdown(countdown) }}
+              </span>
+            </div>
+          </div>
         </el-form-item>
         
         <el-form-item>
@@ -97,6 +103,7 @@ const router = useRouter()
 const registerFormRef = ref(null)
 const loading = ref(false)
 const countdown = ref(0)
+let countdownTimer = null
 
 const registerForm = reactive({
   email: '',
@@ -104,6 +111,12 @@ const registerForm = reactive({
   confirmPassword: '',
   verifyCode: ''
 })
+
+const formatCountdown = (seconds) => {
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
 
 const validateConfirmPassword = (rule, value, callback) => {
   if (value !== registerForm.password) {
@@ -149,7 +162,7 @@ const sendVerifyCode = async () => {
       email: registerForm.email,
       password: registerForm.password,
       options: {
-        emailRedirectTo: window.location.origin + '/home'
+emailRedirectTo: import.meta.env.VITE_APP_URL + '/home'
       }
     })
     
@@ -157,15 +170,34 @@ const sendVerifyCode = async () => {
     
     ElMessage.success('验证码已发送到您的邮箱')
     countdown.value = 60
-    const timer = setInterval(() => {
+    
+    if (countdownTimer) {
+      clearInterval(countdownTimer)
+    }
+    
+    countdownTimer = setInterval(() => {
       countdown.value--
       if (countdown.value <= 0) {
-        clearInterval(timer)
+        clearInterval(countdownTimer)
+        countdownTimer = null
       }
     }, 1000)
   } catch (error) {
-    ElMessage.error(error.message || '发送验证码失败')
+    handleSendError(error)
   }
+}
+
+const handleSendError = (error) => {
+  const errorMessages = {
+    'User already registered': '该邮箱已注册',
+    'Invalid email': '邮箱地址格式不正确',
+    'Password too weak': '密码强度不足',
+    'Too many requests': '请求过于频繁，请稍后再试',
+    'Network error': '网络错误，请检查网络连接'
+  }
+  
+  const message = errorMessages[error.message] || error.message || '发送验证码失败'
+  ElMessage.error(message)
 }
 
 const handleRegister = async () => {
@@ -227,5 +259,27 @@ const goToLogin = () => {
   align-items: center;
   gap: 8px;
   margin-top: 16px;
+}
+
+.verify-code-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+}
+
+.verify-code-wrapper .el-input {
+  flex: 1;
+}
+
+.countdown-wrapper {
+  min-width: 80px;
+  text-align: center;
+}
+
+.countdown-text {
+  color: #909399;
+  font-size: 14px;
+  font-weight: 500;
 }
 </style>
